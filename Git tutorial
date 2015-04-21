@@ -1,0 +1,37 @@
+Git
+=====
+Ladda ner git (git bash). Git bash är en kommandotolk där man kan ändra och pusha filer till github hemifrån. I skolan
+kan man använda vanliga kommandotolken på en linux dator.
+
+
+Så här använder ni git: Det som står efter "Skriv" ska skrivas in i kommandotolken (git bash).
+Öppna Git bash. Välj stället på datorn där ni vill att projektmappen ska vara, t.ex. Desktop.
+
+Skriv "cd Desktop"
+
+Skriv "git clone https://github.com/elt11jke/FRT090"
+
+Innehållet på github kommer att klonas till datorn. Mappen heter FRT090. Öppna mappen och skapa ett nytt textdokument.
+Det kan heta t.ex. "test.txt". Spara och stäng filen.
+
+Skriv "git status"
+
+Det kommer nu stå att det finns 1 "Untracked file" som heter "test.txt"
+
+Skriv "git add test.txt"
+
+Filen är nu "staged for commit". Skriv "git status" för att bekräfta detta.
+
+Skriv " git commit -m "la till test"
+
+-m betyder att man efter det skriver ett meddelande i citation tecken, "la till test". git commit lägger till alla
+filer som man har lagt till genom git add.
+
+Skriv "git pull"
+
+Drar ner nya eller ändrade filer från github till det lokala repository.
+Detta måste alltid göras innan ni pushar. Detta eftersom när flera jobbar på ett projekt samtidigt så måste man
+se till att man har den senaste versionen så man inte pushar upp filer som blivit ändrade.
+
+Skriv "git push"
+
