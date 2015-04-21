@@ -1,12 +1,30 @@
-javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java Opcom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java OpCom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
 
 javah MPCController
 
 gcc -Wl,--add-stdcall-alias -I"C:\Program Files\Java\jdk1.8.0_25\include" -I"C:\Program Files\Java\jdk1.8.0_25\include\win32" -shared -o myjni.dll testsolver.c solver.c ldl.c util.c matrix_support.c
 
-java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main Opcom Regul MPCController PlotData ReferenceGenerator
+java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main OpCom Regul MPCController PlotData ReferenceGenerator
 
 
 
 linux
-gcc -fPIC -I"/etc/alternatives/java_sdk_openjdk/include" -I"/etc/alternatives/java_sdk_openjdk/include/linux" -shared -o myjni.dll testsolver.c solver.c ldl.c util.c matrix_support.c
+
+
+
+
+DO THIS FIRST ON SCHOOL COMPUTER:
+java -Djava.library.path=/h/d7/z/*your account name*/Destination/to/github/folder/where/the/code/is
+
+example:
+
+java -Djava.library.path=/h/d7/z/tfy11mal/Documents/FRTN01/RealPred-Projekt/QuadTankProjectEVo
+
+
+
+
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java OpCom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
+
+gcc -fPIC -I"/etc/alternatives/java_sdk_openjdk/include" -I"/etc/alternatives/java_sdk_openjdk/include/linux" -shared -o libmyjni.so testsolver.c solver.c ldl.c util.c matrix_support.c
+
+java -cp ".:csrt.jar:virtualsimulator.jar:regler.jar:" Main OpCom Regul MPCController PlotData ReferenceGenerator

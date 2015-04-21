@@ -1,5 +1,6 @@
  import javax.swing.*;
 
+
   public class Main { 
     public static void main(String[] argv) { 
 
@@ -28,7 +29,7 @@
         return;
       }
 
-      //refgen.start(); 
+      refgen.start(); 
       regul.start(); 
     } 
     
