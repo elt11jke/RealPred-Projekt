@@ -1,0 +1,12 @@
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java Opcom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
+
+javah MPCController
+
+gcc -Wl,--add-stdcall-alias -I"C:\Program Files\Java\jdk1.8.0_25\include" -I"C:\Program Files\Java\jdk1.8.0_25\include\win32" -shared -o myjni.dll testsolver.c solver.c ldl.c util.c matrix_support.c
+
+java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main Opcom Regul MPCController PlotData ReferenceGenerator
+
+
+
+linux
+gcc -fPIC -I"/etc/alternatives/java_sdk_openjdk/include" -I"/etc/alternatives/java_sdk_openjdk/include/linux" -shared -o myjni.dll testsolver.c solver.c ldl.c util.c matrix_support.c
