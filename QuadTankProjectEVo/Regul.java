@@ -13,7 +13,7 @@ public class Regul extends Thread {
 	private AnalogOut analogOutu1, analogOutu2;
 	
 	private double h1, h2, h3, h4, u1, u2, tank1Ref, tank2Ref, y1, uref1, yold1, P1, I1, v1, y2, uref2, yold2, P2, I2, v2;
-	private long timeSolCVX;
+	private long timeSolCVX, startTime;
 	private int priority;
 	private boolean WeShouldRun = true;
 
@@ -51,13 +51,12 @@ public class Regul extends Thread {
 		mutex = new Semaphore(1);
 		mpc=new MPCController();
 		fc1 = new FlowController1();
-		fc2 = new FLowController2();
+		fc2 = new FlowController2();
 		modeMon = new ModeMonitor();
-		dataToSend = new double[6]
+		dataToSend = new double[6];
 	}
 	public void run() {
 		long duration;
-		long startTime;
 
 		setPriority(priority);
 		mutex.take();
@@ -90,7 +89,7 @@ public class Regul extends Thread {
 				
 					//Test
 					System.out.println(solution[0]);
-					System.out.ptrintln(solution[1]); 
+					System.out.println(solution[1]); 
 				
 		            sendDataToOpCom(tank1Ref,tank2Ref,0,0,u1,u2);
 		            
@@ -140,53 +139,8 @@ public class Regul extends Thread {
 					//sendDataToOpCom(tank1Ref,0,0);
 					break;
 				}
-			/*
-			case BALL: {
-				// Code for tthe BALL mode
-				// Written by you.
-				// Should include a call to sendDataToOpCom 
-				
-		t 		
-				positionRef = referenceGenerator.getRef();
-				/*
-				try {
-					position = analogInPosition.get();
-				} catch (IOChannelException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-			    synchronized(inner){
-				    synchronized(outer){
-				    	angleRef=outer.limit(outer.calculateOutput(position, positionRef),-10,10 ) ;
-				
-				    	motorVolt= inner.limit(inner.calculateOutput(angle, angleRef),-10, 10);
-				
-				    	try {
-				    		analogOut.set(motorVolt);
-				    	} catch (IOChannelException e) {
-				    		/t/ TODO Auto-generated catch block
-				    		e.printStackTrace();
-				    	}
-				
-				   		outer.updateState(angleRef);
-					}
-				inner.updateState(motorVolt);
-				
-			    }
-			    
-				sendDataToOpCom(positionRef,position,angleRef);
-				break;
 				
 			}
-			*/
-			default: {
-				System.out.println("Error: Illegal mode.");
-				break;
-		 	}
-			}
-			
-
 			duration = (long)(1000*h) - System.currentTimeMillis() - startTime;
 			if(duration>0){
 				try {
@@ -195,10 +149,9 @@ public class Regul extends Thread {
 					System.out.println("Error in thread, sleep funtion");
 				}				
 			}
-		
+			mutex.give();
 		}
-		mutex.give();
-		
+			
 	}
 	public void setOpCom(OpCom opcom) {
 		// Implemented before
@@ -215,7 +168,7 @@ public class Regul extends Thread {
 		System.out.println("CVXGEN mode");	
 	}
 	public void setQPGENMode(){
-		modeMonduration.setMode(QPGEN);
+		modeMon.setMode(QPGEN);
 		System.out.println("QPGEN mode");
 	}
 	// Called from OpCom when shutting down
@@ -223,11 +176,12 @@ public class Regul extends Thread {
 		WeShouldRun = false;
 		mutex.take();
 	}
-
-
+	public int getMode(){
+	 return	modeMon.getMode();
+	}
 	// Called in every sample in order to send plot data to OpCom
 	private void sendDataToOpCom(double yref1,double yref2, double y1,double y2, double u1,double u2) {
-		double x = (double)(System.currentTimeMillis() - starttime) / 1000.0;
+		double x = (double)(System.currentTimeMillis() - startTime) / 1000.0;
 		DoublePoint dp1 = new DoublePoint(x,u1);
 		DoublePoint dp2 = new DoublePoint(x,u2);
 		
@@ -250,8 +204,5 @@ public class Regul extends Thread {
 			v = max;
 		}
 		return v;
-	}
-	private int getMode(){
-	 return	modeMon.getMode();
 	}
 }
