@@ -9,7 +9,7 @@
 
  params.S = 0.7231295261251562; 
 
- settings.verbose = 1;
+ settings.verbose = 0;
  
  % Assign initial parameters intial state
 params.x_0 = [0 ; 0 ; 0; 0];
@@ -21,7 +21,11 @@ params.r=[10;10;10;10];
 
 
 % Exercise the high-speed solver.
-[vars, status] = csolve(params);  % solve, saving results.
+for jj = 1:100
+tic
+[vars, status] = csolve(params,settings);  % solve, saving results.
+tt = toc
+end
 
 % Check convera=struct2cell(vars);gence, and display the optimal variable value.
 if ~status.converged, error 'failed to converge'; end
@@ -31,6 +35,6 @@ a=struct2cell(vars);
 hold on;
 for i=1:30
     b=cell2mat(a(i));
-    plot(i,b(1),'*g');
+    plot(i,b(1),'*');
 end
 hold off;
