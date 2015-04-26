@@ -10,8 +10,9 @@ public class FlowController1 implements Runnable{
 
 	private AnalogOut analogOutU1;
 	private AnalogIn analogInY1;
-	private double v1, P1, y1, I1, u1, uref1, yold1, y;
+	private double v1, P1, I1, uref1, yold1, y;
 	private final double K = 0.21, h = 0.01, Ti = 0.06, Tr = 0.06, yMin=0.0, yMax=17.0;
+	public double u1, y1;
 
 	public FlowController1(){
 

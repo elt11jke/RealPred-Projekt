@@ -4,6 +4,7 @@ import se.lth.control.realtime.AnalogIn;
 import se.lth.control.realtime.AnalogOut;
 import se.lth.control.realtime.IOChannelException;
 import se.lth.control.realtime.Semaphore;
+import java.lang.Math;
 
 public class Regul extends Thread {
 	public static final int CVXGEN = 0, QPGEN = 1;
@@ -12,12 +13,26 @@ public class Regul extends Thread {
 	private AnalogIn analogInY1, analogInY2, analogInY3, analogInY4;
 	private AnalogOut analogOutu1, analogOutu2;
 	
-	private double h1, h2, h3, h4, u1, u2, tank1Ref, tank2Ref, y1, uref1, yold1, P1, I1, v1, y2, uref2, yold2, P2, I2, v2;
+	private double h1, h2, h3, h4, u1, u2, tank1Ref, tank2Ref, y1, uref1, yold1, P1, I1, v1, y2, uref2, yold2, P2, I2, v2, y1LP, y2LP, y1LP1, y2LP1, y1LP2, y2LP2;
 	private long timeSolCVX, startTime;
 	private int priority;
 	private boolean WeShouldRun = true;
 
 	private double[] dataToSend, solution;
+	private int[][] W0 = new int[6][6];
+	private int[][] V0 = new int[2][2];
+	private int[][] P0 = new int[6][6];
+	private double[][] K0 = new int[6][2];
+	private double[][] A0 = new int[6][6];
+	private double[][] B0 = new int[6][2];
+	private double[][] C0 = new int[2][6];
+	private double[] states0 = new double[6];
+	private double[] measurements0 = new double[2];
+	private Matrix measurements;	
+	private double tank1, tank2;
+	
+	
+
 	
 	//Semaphore
 	private Semaphore mutex; // used for synchronization at shut-down
@@ -60,7 +75,44 @@ public class Regul extends Thread {
 
 		setPriority(priority);
 		mutex.take();
+		fc1.run();
+		fc2.run();
 
+		dataToSend[0] = 0;
+		dataToSend[1] = 0;
+		dataToSend[2] = 0;
+		dataToSend[3] = 0;
+		dataToSend[4] = 0;
+		dataToSend[5] = 0;
+		solution = mpc.calculateOutput(dataToSend);
+
+		for(int i=1; i<7; i++) {
+			W0[i][i] = 1;
+		}
+
+		for(int i=1; i<3; i++) {
+			V0[i][i] = 0.1;
+		}
+
+		for(int i=1;i<7; i++) {
+			P0[i][i] = 1;
+		}
+
+		A0 = {{0.9708,0.,0.2466,0.,0.1126,0.0072}, {0.,0.9689,0.,0.4032,0.0108,0.1061}, {0.,0.,0.7495,0.,0.,0.0482}, {0.,0.,0.,0.5898,0.0381,0.}, {0.,0.,0.,0.,1.,0.}, {0.,0.,0.,0.,0.,1.}}; 
+		B0 = {{0.1126, 0.0072},{0.0108, 0.1061}, {0., 0.0482}, {0.0381, 0.}, {0., 0.}, {0., 0.}};
+		C0 = {{0.5, 0., 0., 0., 0., 0.}, {0., 0.5, 0., 0., 0., 0.}};
+
+		Matrix W = new Matrix(W0);
+		Matrix V = new Matrix(V0);
+		Matrix P = new Matrix(P0);
+		Matrix A = new Matrix(A0);
+		Matrix B = new Matrix(B0);
+		Matrix C = new Matrix(C0);
+		Matrix states = new Matrix(states0);
+
+		y1LP1 = 0; y1LP2 = 0; y2LP1 = 0; y2LP2 = 0;
+		
+		 		
 		while (WeShouldRun) {
 			startTime = System.currentTimeMillis();
 			
@@ -74,9 +126,22 @@ public class Regul extends Thread {
 		        
 					tank1Ref=referenceGenerator.getRef1();
 					tank2Ref=referenceGenerator.getRef2();
+
+					y1LP =0.25*(4*y1LP1 - y1LP2 + fc1.y1);
+					y1LP2 = y1LP1; y1LP1 = y1LP; 
+					
+					y2LP = (1/9)*(12*y2LP1 - 4*y2LP2 + fc2.y2);
+					y2LP2 = y2LP1; y2LP1 = y2LP;
+
+					measurements0 = {y1LP, y2LP};
+					measurements = new Matrix(measurements0);
 				
-					dataToSend[0] = 0;
-					dataToSend[1] = 0;
+					P = A.transpose().times(P).times(A).minus(A.transpose().times(P).times(C).times((C.transpose().times(P).times(C).plus(V)).inverse()).times(B.transpose.times(P).times(A)).plus(W);	
+					K = (B.transpose().times(P).times(B).plus(V)).inverse().times(B.transpose()).times(P).times(A);		
+					states = A.times(states).minus(K.times(measurements.minus(C.times(states))));			
+
+					dataToSend[0] = states[1];
+					dataToSend[1] = states[2];
 					dataToSend[2] = 0;
 					dataToSend[3] = 0;
 					dataToSend[4] = tank1Ref;
@@ -89,15 +154,15 @@ public class Regul extends Thread {
 				
 					//Test
 					System.out.println(solution[0]);
-					System.out.println(solution[1]); 
+					System.out.println(solution[1]);
+
+
+					//Actuate
+					fc1.changeRef(solution[0]);
+					fc2.changeRef(solution[1]);
 				
-		            sendDataToOpCom(tank1Ref,tank2Ref,0,0,u1,u2);
-		            
-		            /*uncomment to test in the real process
-		            
-		               sendDataToOpCom(tank1Ref,tank2Ref,y1,y2,u1,u2);
-		               
-		            */
+		            		sendDataToOpCom(tank1Ref,tank2Ref,states[1],states[2],fc1.u1,fc2.u2);
+		           
 		            
 					break;
 				}
