@@ -1,10 +1,13 @@
+
+
 import se.lth.control.DoubleField;
 import se.lth.control.DoublePoint;
 import se.lth.control.realtime.AnalogIn;
 import se.lth.control.realtime.AnalogOut;
 import se.lth.control.realtime.IOChannelException;
 import se.lth.control.realtime.Semaphore;
-import java.lang.Math;
+import java.lang.Math.*;
+import Jama.*;
 
 public class Regul extends Thread {
 	public static final int CVXGEN = 0, QPGEN = 1;
@@ -19,15 +22,15 @@ public class Regul extends Thread {
 	private boolean WeShouldRun = true;
 
 	private double[] dataToSend, solution;
-	private int[][] W0 = new int[6][6];
-	private int[][] V0 = new int[2][2];
-	private int[][] P0 = new int[6][6];
-	private double[][] K0 = new int[6][2];
-	private double[][] A0 = new int[6][6];
-	private double[][] B0 = new int[6][2];
-	private double[][] C0 = new int[2][6];
-	private double[] states0 = new double[6];
-	private double[] measurements0 = new double[2];
+	private double[][] W0 = new double[6][6];
+	private double[][] V0 = new double[2][2];
+	private double[][] P0 = new double[6][6];
+	private double[][] K0 = new double[6][2];
+	private double[][] A0 = {{0.9708,0.0,0.2466,0.0,0.1126,0.0072}, {0.0,0.9689,0.0,0.4032,0.0108,0.1061}, {0.0,0.0,0.7495,0.0,0.0,0.0482}, {0.0,0.0,0.0,0.5898,0.0381,0.0}, {0.0,0.0,0.0,0.0,1.0,0.0}, {0.0,0.0,0.0,0.0,0.0,1.0}}; 
+	private double[][] B0 = {{0.1126, 0.0072},{0.0108, 0.1061}, {0.0, 0.0482}, {0.0381, 0.}, {0.0, 0.0}, {0.0, 0.0}};
+	private double[][] C0 = {{0.5, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.0, 0.5, 0.0, 0.0, 0.0, 0.0}};
+	private double[][] states0 = new double[6][1];
+	private double[][] measurements0 = new double[2][1];
 	private Matrix measurements;	
 	private double tank1, tank2;
 	
@@ -86,21 +89,20 @@ public class Regul extends Thread {
 		dataToSend[5] = 0;
 		solution = mpc.calculateOutput(dataToSend);
 
-		for(int i=1; i<7; i++) {
-			W0[i][i] = 1;
+		for(int i=0; i<6; i++) {
+			W0[i][i] = 1.0;
 		}
 
-		for(int i=1; i<3; i++) {
+		for(int i=0; i<2; i++) {
 			V0[i][i] = 0.1;
 		}
 
-		for(int i=1;i<7; i++) {
-			P0[i][i] = 1;
+		for(int i=0;i<6; i++) {
+			P0[i][i] = 1.0;
 		}
 
-		A0 = {{0.9708,0.,0.2466,0.,0.1126,0.0072}, {0.,0.9689,0.,0.4032,0.0108,0.1061}, {0.,0.,0.7495,0.,0.,0.0482}, {0.,0.,0.,0.5898,0.0381,0.}, {0.,0.,0.,0.,1.,0.}, {0.,0.,0.,0.,0.,1.}}; 
-		B0 = {{0.1126, 0.0072},{0.0108, 0.1061}, {0., 0.0482}, {0.0381, 0.}, {0., 0.}, {0., 0.}};
-		C0 = {{0.5, 0., 0., 0., 0., 0.}, {0., 0.5, 0., 0., 0., 0.}};
+
+
 
 		Matrix W = new Matrix(W0);
 		Matrix V = new Matrix(V0);
@@ -108,6 +110,7 @@ public class Regul extends Thread {
 		Matrix A = new Matrix(A0);
 		Matrix B = new Matrix(B0);
 		Matrix C = new Matrix(C0);
+		Matrix K = new Matrix(K0);
 		Matrix states = new Matrix(states0);
 
 		y1LP1 = 0; y1LP2 = 0; y2LP1 = 0; y2LP2 = 0;
@@ -133,15 +136,16 @@ public class Regul extends Thread {
 					y2LP = (1/9)*(12*y2LP1 - 4*y2LP2 + fc2.y2);
 					y2LP2 = y2LP1; y2LP1 = y2LP;
 
-					measurements0 = {y1LP, y2LP};
+					measurements0[0][0] = y1LP;
+					measurements0[1][0] = y2LP;
 					measurements = new Matrix(measurements0);
 				
-					P = A.transpose().times(P).times(A).minus(A.transpose().times(P).times(C).times((C.transpose().times(P).times(C).plus(V)).inverse()).times(B.transpose.times(P).times(A)).plus(W);	
+					P = A.transpose().times(P).times(A).minus(A.transpose().times(P).times(C).times((C.transpose().times(P).times(C).plus(V)).inverse()).times(B.transpose().times(P).times(A))).plus(W);	
 					K = (B.transpose().times(P).times(B).plus(V)).inverse().times(B.transpose()).times(P).times(A);		
 					states = A.times(states).minus(K.times(measurements.minus(C.times(states))));			
 
-					dataToSend[0] = states[1];
-					dataToSend[1] = states[2];
+					dataToSend[0] = states.get(0,0);
+					dataToSend[1] = states.get(1,0);
 					dataToSend[2] = 0;
 					dataToSend[3] = 0;
 					dataToSend[4] = tank1Ref;
@@ -161,7 +165,7 @@ public class Regul extends Thread {
 					fc1.changeRef(solution[0]);
 					fc2.changeRef(solution[1]);
 				
-		            		sendDataToOpCom(tank1Ref,tank2Ref,states[1],states[2],fc1.u1,fc2.u2);
+		            		sendDataToOpCom(tank1Ref,tank2Ref,states.get(0,0),states.get(1,0),fc1.u1,fc2.u2);
 		           
 		            
 					break;
