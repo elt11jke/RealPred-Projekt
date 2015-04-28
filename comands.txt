@@ -10,21 +10,13 @@ java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main OpCom Regul MPCContr
 
 linux
 
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java OpCom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java FlowController1.java FlowController2.java Jama/Matrix.java Jama/util/Maths.java Jama/LUDecomposition.java Jama/EigenvalueDecomposition.java Jama/QRDecomposition.java Jama/SingularValueDecomposition.java Jama/CholeskyDecomposition.java 
 
-
-
-DO THIS FIRST ON SCHOOL COMPUTER:
-java -Djava.library.path=/h/d7/z/*your account name*/Destination/to/github/folder/where/the/code/is
-
-example:
-
-java -Djava.library.path=/h/d7/z/tfy11mal/Documents/FRTN01/RealPred-Projekt/QuadTankProjectEVo
-
-
-
-
-javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java OpCom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
+javah MPCController
 
 gcc -fPIC -I"/etc/alternatives/java_sdk_openjdk/include" -I"/etc/alternatives/java_sdk_openjdk/include/linux" -shared -o libmyjni.so testsolver.c solver.c ldl.c util.c matrix_support.c
 
-java -cp ".:csrt.jar:virtualsimulator.jar:regler.jar:" Main OpCom Regul MPCController PlotData ReferenceGenerator
+
+export LD_LIBRARY_PATH=/tmp/QuadTankProjectEvo:$LD_LIBRARY_PATH
+
+java -cp ".:csrt.jar;virtualsimulator.jar:regler.jar:" Main OpCom Regul MPCController PlotData ReferenceGenerator FlowController1 FlowController2 Jama/Matrix Jama/util/Maths Jama/LUDecomposition Jama/EigenvalueDecomposition Jama/QRDecomposition Jama/SingularValueDecomposition Jama/CholeskyDecomposition

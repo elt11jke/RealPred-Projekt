@@ -3,7 +3,7 @@ public class MPCController {
 	double[] u;
 	
 	static{
-		System.loadLibrary("/h/d7/z/tfy11mal/Documents/FRTNO1/RealPred-Projekt/QuadTankProjectEVo/libmyjni.so");
+		System.loadLibrary("myjni");
 	}
 	
 

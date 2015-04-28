@@ -9,23 +9,25 @@ import java.lang.Math.*;
 public class FlowController1 implements Runnable{
 
 	private AnalogOut analogOutU1;
-	private AnalogIn analogInY1;
+	private AnalogIn analogInYraw1;
+	private int prio;
 	private double v1, P1, I1, uref1, yold1, y;
 	private final double K = 0.21, h = 0.01, Ti = 0.06, Tr = 0.06, yMin=0.0, yMax=17.0;
-	public double u1, y1;
+	public double u1, yraw1;
 
-	public FlowController1(){
+	public FlowController1(int prio){
+		this.prio = prio;
 
 		try {
-			analogInY1 = new AnalogIn(35);
 			analogOutU1 = new AnalogOut(31);
+			analogInYraw1 = new AnalogIn(35);
 
 			
 		} catch (IOChannelException e) { 
 			System.out.print("Error: IOChannelException: ");
 			System.out.println(e.getMessage());
 		}
-			y1 = 0.0;
+			yraw1 = 0.0;
 			uref1 = 0.5; 
 			yold1 = 0.0;
 			P1 = 0.0;
@@ -66,12 +68,12 @@ public class FlowController1 implements Runnable{
 
 		double u;
 		try{
-			y1 = analogInY1.get();
+			yraw1 = analogInYraw1.get();
 		} catch (Exception e){
 			System.out.println("Unable to receive data from port");
 		}	
 		uref1 = uref1/10;
-		y = Math.sqrt(Math.max((y1-yMin),0)/(yMax-yMin));
+		y = Math.sqrt(Math.max((yraw1-yMin),0)/(yMax-yMin));
 
 		v1 = 0.0;
 		P1 = -K*y;
@@ -87,7 +89,7 @@ public class FlowController1 implements Runnable{
 
 		// update state
 		I1 = I1 + h*K/Ti*(uref1-y) + h*(1/Tr)*(u-v1);
-		yold1 = y1;
+		yold1 = yraw1;
 
 		// rescale output
 		return 10*u;
