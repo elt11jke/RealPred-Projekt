@@ -1,0 +1,36 @@
+function Lc = compress_row_L(L)
+
+% store lower tringalular L (from LDL-factoriztioan) matrix in row
+% compressed format with diagonal omitted (since they are all 1:s)
+
+if not(isequal(diag(L),ones(length(L),1)))
+    error('Matrix in compress_row_L does not have unit diagonal');
+end
+
+% remove else clause, since slower!
+
+if 1
+Lc = compress_row(L-spdiags(diag(L),0,length(L),length(L)));
+
+else
+n = length(L);
+nbr_el = length(find(L ~= 0))-size(L,1);
+
+Lc.elem_per_row = zeros(n,1);
+Lc.val = zeros(nbr_el,2);
+
+counter = 1;
+for jj = 1:length(L)
+    idx = find(L(jj,:) ~= 0);
+    Lc.elem_per_row(jj) = length(idx)-1;
+    for kk = 1:length(idx) %-1 removed!!
+        % added if clause, skip diagonal elements! might be wrong?
+        if idx(kk) ~= jj
+            Lc.val(counter,1) = idx(kk);
+            Lc.val(counter,2) = L(jj,idx(kk));
+            counter = counter+1;
+        end
+    end
+end
+
+end

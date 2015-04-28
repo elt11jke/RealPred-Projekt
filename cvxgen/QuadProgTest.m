@@ -128,15 +128,6 @@ tt = toc
      sol2(i) = sol((size(sol,1)-2*n)+2*i);
  end
 
-%  for i=1:n
-%      if sol1(i)>=10
-%          sol1(i)=10;
-%      else if sol1(i)<=-10
-%              sol1(i)=-10;
-%          end
-%      end
-%  end
-     
  %figure()
 plot([1:n],sol1,'*g')
 
@@ -172,15 +163,6 @@ qp_gen_sol1 = [];
  for i=1:n
      qp_gen_sol2(i) = qp_gen_sol((size(sol,1)-2*n)+2*i);
  end
-
-%  for i=1:n
-%      if sol1(i)>=10
-%          sol1(i)=10;
-%      else if sol1(i)<=-10
-%              sol1(i)=-10;
-%          end
-%      end
-%  end
      
  %figure()
 plot([1:n],qp_gen_sol1,'*r')

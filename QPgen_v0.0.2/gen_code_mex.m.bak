@@ -1,0 +1,369 @@
+function gen_code_mex(alg_data,opts)
+
+fprintf('Generating C code...');
+
+% generate header file
+gen_header_file(opts);
+
+
+
+% generate mex gateway file
+gen_mex_gateway(alg_data,opts);
+
+
+% generate code for main c-file
+
+
+% nbr of elements in gt
+n_gt = size(alg_data.G,2);
+% nbr of elements in bt
+n_bt = size(alg_data.B,2);
+% nbr of elements in x-variable
+n_x = length(alg_data.H);
+% nbr of elements in y and lambda varialbes
+n_y = size(alg_data.C,1);
+
+% nbr of elements in original variable
+if isequal(opts.reform,'original')
+    n_orig_x = length(alg_data.H);
+elseif isequal(opts.reform,'eq') || isequal(opts.reform,'ineq')
+    n_orig_x = size(alg_data.R,1);
+end
+
+
+% open file to write to
+fid = fopen('QPgen.c','w');
+
+% include header files
+if opts.no_math_lib == 0 || isequal(opts.alg,'ADMM')
+    fprintf(fid,'#include <math.h>\n\n');
+end
+fprintf(fid,'#include "QPgen.h"\n');
+
+
+
+% include function definitions
+fprintf(fid,inline_fcn_def(alg_data,opts));
+
+% generate data file
+if not(isfield(opts,'gen_data')) || opts.gen_data == 1
+    gen_data_file(alg_data,opts);
+end
+
+% include data
+fprintf(fid,'#include "alg_data.c"\n\n');
+
+
+
+% generate main_loop ---------------------------------------------------
+fprintf(fid,['void qp(' opts.precision ' *x_out, int *iter']);
+if alg_data.gt == 1
+    fprintf(fid,[', ' opts.precision ' *gt']);
+end
+if alg_data.bt == 1
+    fprintf(fid,[', ' opts.precision ' *bt']);
+end
+fprintf(fid,[') {\n\n/* define data */\n']);
+
+
+
+
+% precompute linear term in x-update (dense) and r.h.s. in .. (sparse)
+if opts.dense == 1
+    fprintf(fid,[opts.precision ' q[' int2str(n_x) '] = {0};\n\n']);
+    fprintf(fid,[opts.precision ' q1[' int2str(n_x) '] = {0};\n\n']);
+    fprintf(fid,[opts.precision ' q2[' int2str(n_x) '] = {0};\n\n']);
+    if alg_data.gt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.Q1) '(&Q1,gt,q1);\n\n']);
+    elseif not(isempty(alg_data.Q1))
+        fprintf(fid,['copy_vec_part((' opts.precision ' *) Q1,q1,' int2str(size(alg_data.Q1,1)) ');\n\n']); %q1 = Q1
+    end
+    if alg_data.bt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.Q2) '(&Q2,bt,q2);\n\n']);
+    else
+        if not(isempty(alg_data.Q2))
+            fprintf(fid,['copy_vec_part((' opts.precision ' *) Q2,q2,' int2str(size(alg_data.Q2,1)) ');\n\n']); %q2 = Q2
+        end
+    end
+    fprintf(fid,['vec_add(q1,q2,q,' int2str(n_x) ');\n\n']);
+elseif opts.dense == 0
+    % ADD CONDITION THAT ONLY ALLOWED IF ORIGINAL FORMULATION!
+    % r.h.s. of equality constraint in sparse x-update
+   fprintf(fid,[opts.precision ' q[' int2str(n_x+size(alg_data.B,1)) ']= {0};\n\n']);
+   fprintf(fid,[opts.precision ' q1[' int2str(n_x) ']= {0};\n\n']);
+   if not(isempty(alg_data.B))
+        fprintf(fid,[opts.precision ' q2[' int2str(size(alg_data.B,1)) ']= {0};\n\n']);
+   end
+   if alg_data.gt == 1
+       fprintf(fid,[ 'mat_vec_mult_' structure(alg_data.G) '(&G,gt,q1);\n\n']);
+   elseif not(isempty(alg_data.G))
+       fprintf(fid,['copy_vec_part((' opts.precision ' *) G,q1,' int2str(size(alg_data.G,1)) ');\n\n']); %q1 = G
+   end
+   if alg_data.bt == 1
+       fprintf(fid,['mat_vec_mult_' structure(alg_data.B) '(&B,bt,q2);\n\n']);
+   elseif not(isempty(alg_data.B))
+      fprintf(fid,['copy_vec_part((' opts.precision ' *) B,q2,' int2str(size(alg_data.B,1)) ');\n\n']); %q2 = B
+   end
+end
+
+% define upper and lower bounds
+fprintf(fid,[opts.precision ' l[' int2str(n_y) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' u[' int2str(n_y) '] = {0};\n\n']);
+
+fprintf(fid,['copy_vec_part((' opts.precision ' *) Lb,l,' int2str(n_y) ');\n\n']);
+fprintf(fid,['copy_vec_part((' opts.precision ' *) Ub,u,' int2str(n_y) ');\n\n']);
+
+
+% move all variable declarations to the top???
+fprintf(fid,[opts.precision ' tmp_var_p[' int2str(n_y) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' tmp_var_p2[' int2str(n_y) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' arg_prox_h[' int2str(n_y) '] = {0};\n\n']);
+
+if isequal(opts.reform,'eq')
+    if alg_data.gt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.h.L1) '(&L1,gt,tmp_var_p);\n\n']);
+    elseif not(isempty(alg_data.h.L1))
+        fprintf(fid,['copy_vec_part((' opts.precision ' *) L1,tmp_var_p,' int2str(n_y) ');\n\n']);
+    end
+    if alg_data.bt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.h.L2) '(&L2,bt,tmp_var_p2);\n\n']);
+    elseif not(isempty(alg_data.h.L2))
+        fprintf(fid,['copy_vec_part((' opts.precision ' *) L2,tmp_var_p2,' int2str(n_y) ');\n\n']);
+    end
+    fprintf(fid,['vec_add(tmp_var_p,tmp_var_p2,tmp_var_p,' int2str(n_y) ');\n\n']);
+    fprintf(fid,['vec_sub(l,tmp_var_p,l,' int2str(n_y) ');\n\n']);
+    fprintf(fid,['vec_sub(u,tmp_var_p,u,' int2str(n_y) ');\n\n']);
+end
+
+
+% create vector r = r1*gt+r2*bt to recover original variables 
+
+if isequal(opts.reform,'eq') || isequal(opts.reform,'ineq')
+    % add temporary variables to store intermediate results
+    fprintf(fid,[opts.precision ' tmp_var_n_orig[' int2str(n_orig_x) '] = {0};\n\n']);
+    fprintf(fid,[opts.precision ' tmp_var_n2_orig[' int2str(n_orig_x) '] = {0};\n\n']);
+
+    fprintf(fid,[opts.precision ' r[' int2str(n_orig_x) '] = {0};\n\n']);
+    if alg_data.gt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.r1) '(&r1,gt,tmp_var_n_orig);\n\n']);
+        % fprintf(fid,['*gt']);
+    elseif not(isempty(alg_data.r1))
+        fprintf(fid,['copy_vec_part((' opts.precision ' *) r1,tmp_var_n_orig,' int2str(n_orig_x) ');\n\n']);
+    end
+    if alg_data.bt == 1
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.r2) '(&r2,bt,tmp_var_n2_orig);\n\n']);
+        %fprintf(fid,['*bt;\n\n']);
+    elseif not(isempty(alg_data.r2))
+        fprintf(fid,['copy_vec_part((' opts.precision ' *) r2,tmp_var_n2_orig,' int2str(n_orig_x) ');\n\n']);
+    end
+    fprintf(fid,['vec_add(tmp_var_n_orig,tmp_var_n2_orig,r,' int2str(n_orig_x) ');\n\n']);
+end
+
+
+
+
+
+
+% initialize algorithm state (cold-starting)
+fprintf(fid,[opts.precision ' lambda[' int2str(n_y) '] = {0};\n']);
+fprintf(fid,[opts.precision ' y[' int2str(n_y) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' x[' int2str(n_x) '] = {0};\n\n']);
+if isequal(opts.alg,'FGMdual')
+    fprintf(fid,[opts.precision ' lambda_old[' int2str(n_y) '] = {0};\n']);
+    fprintf(fid,[opts.precision ' v[' int2str(n_y) '] = {0};\n']);
+    if opts.restart == 1
+        fprintf(fid,[opts.precision ' v_old[' int2str(n_y) '] = {0};\n']);
+    end
+end
+if isequal(opts.alg,'ADMM')
+    fprintf(fid,[opts.precision ' y_old[' int2str(n_y) '] = {0};\n\n']);
+    fprintf(fid,[opts.precision ' Cx[' int2str(n_y) '] = {0};\n\n']);
+end
+
+% add temporary variables to store intermediate results
+fprintf(fid,[opts.precision ' tmp_var_n[' int2str(n_x) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' tmp_var_n2[' int2str(n_x) '] = {0};\n\n']);
+
+% add temporary variables to store intermediate results
+if opts.dense == 0
+    fprintf(fid,[opts.precision ' tmp_var_nm[' int2str(n_x+size(alg_data.B,1)) '] = {0};\n\n']);
+    fprintf(fid,[opts.precision ' tmp_var_nm2[' int2str(n_x+size(alg_data.B,1)) '] = {0};\n\n']);
+end
+
+% never used?
+%fprintf(fid,[opts.precision ' tmp_var_m[' int2str(size(alg_data.B,1)) '] = {0};\n\n']);
+fprintf(fid,[opts.precision ' rhs[' int2str(n_x+size(alg_data.B,1)) '] = {0};\n\n']);
+
+if isequal(opts.alg,'FGMdual') && opts.no_math_lib == 0
+    fprintf(fid,[opts.precision ' theta = 1;\n']);
+    fprintf(fid,[opts.precision ' theta_old = 1;\n\n']);
+end
+
+
+fprintf(fid,['int jj = 0;\n\n']);
+fprintf(fid,[opts.precision ' cond = -1;\n\n']);
+
+% add for-loop from 1 to max_iter
+%fprintf(fid,['for (jj = 1; jj <= ' int2str(opts.max_iter) '; jj++ ) {\n\n']);
+
+% add while-loop from 1 to max_iter or cond
+fprintf(fid,['while ((jj < ' int2str(opts.max_iter) ') && (cond < 0)) {\n\n']);
+
+% increase iteration counter
+fprintf(fid,['jj++;\n\n']);
+
+% x variable update
+if opts.dense == 1
+    
+    % implements dense x-update x = M*(lambda-E*y)+q for ADMM
+    % implements dense x-update x = M*(v)+q for FGM
+    if isequal(opts.alg,'ADMM')
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.E) '(&E,y,tmp_var_p);\n\n']);
+
+        fprintf(fid,['vec_sub(lambda,tmp_var_p,tmp_var_p,' int2str(n_y) ');\n\n']);
+
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.M) '(&M,tmp_var_p,tmp_var_n);\n\n']);
+    else
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.M) '(&M,v,tmp_var_n);\n\n']);
+    end
+    fprintf(fid,['vec_add(tmp_var_n,q,x,' int2str(n_x) ');\n\n']);
+    
+elseif opts.dense == 0
+    % compute r.h.s. rhs = [CT*(E*y-lambda)-[q1;q2]]; for ADMM
+    % compute r.h.s. rhs = [CT*(-v)-[q1;q2]]; for FGM
+    
+    if isequal(opts.alg,'ADMM')
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.E) '(&E,y,tmp_var_p);\n\n']);
+
+        fprintf(fid,['vec_sub(tmp_var_p,lambda,tmp_var_p,' int2str(n_y) ');\n\n']);
+    else
+        fprintf(fid,['copy_vec_part_negate(v,tmp_var_p,' int2str(n_y) ');\n\n']);
+    end
+    
+    fprintf(fid,['mat_vec_mult_' structure(alg_data.C) '(&CT,tmp_var_p,tmp_var_n);\n\n']);
+    
+    fprintf(fid,['vec_sub(tmp_var_n,q1,tmp_var_n,' int2str(n_x) ');\n\n']);
+    if not(isempty(alg_data.B))
+        fprintf(fid,['stack_vec(tmp_var_n,q2,rhs,' int2str(n_x) ',' int2str(size(alg_data.B,1)) ');\n\n']);
+    else
+        fprintf(fid,['copy_vec_part(tmp_var_n,rhs,' int2str(n_x) ');\n\n']);
+    end
+    
+    % LDL solve: P'LDL'Px = rhs
+    fprintf(fid,['perm_fwdsolve(&L,p,rhs,tmp_var_nm);\n\n']);
+        
+    fprintf(fid,['mat_vec_mult_' structure(alg_data.D_inv) '(&Dinv,tmp_var_nm,tmp_var_nm2);\n\n']);    
+
+    fprintf(fid,['backsolve_perm(&LT,p,tmp_var_nm2,tmp_var_nm);\n\n']);
+
+    fprintf(fid,['copy_vec_part(tmp_var_nm,x,' int2str(n_x) ');\n\n']);
+end
+
+
+% y variable update: y^+ = argmin {h(y)+1/2||Ey-Cx-lambda||} 
+if isequal(opts.alg,'ADMM')
+    fprintf(fid,['copy_vec_part(y,y_old,' int2str(n_y) ');\n\n']);
+end
+fprintf(fid,['mat_vec_mult_' structure(alg_data.C) '(&C,x,tmp_var_p);\n\n']);
+if isequal(opts.alg,'ADMM')
+    % store Cx for stopping condition
+    fprintf(fid,['copy_vec_part(tmp_var_p,Cx,' int2str(n_y) ');\n\n']);
+    % alpha relaxation
+    fprintf(fid,['scalar_mult(' num2str(opts.alpha_relax) ',tmp_var_p,' int2str(n_y) ');\n\n']);
+    fprintf(fid,['mat_vec_mult_' structure(alg_data.E) '(&E,y,tmp_var_p2);\n\n']);
+    fprintf(fid,['scalar_mult(' num2str(1-opts.alpha_relax) ',tmp_var_p2,' int2str(n_y) ');\n\n']);
+    fprintf(fid,['vec_add(tmp_var_p,tmp_var_p2,tmp_var_p,' int2str(n_y) ');\n\n']);
+    % compute tmp_var_p = lambda + alpha Cx + (1-alpha) Ey
+    fprintf(fid,['vec_add(lambda,tmp_var_p,tmp_var_p,' int2str(n_y) ');\n\n']);
+else
+    fprintf(fid,['vec_add(v,tmp_var_p,tmp_var_p,' int2str(n_y) ');\n\n']);
+end
+fprintf(fid,['copy_vec_part(tmp_var_p,arg_prox_h,' int2str(n_y) ');\n\n']);
+% choose prox operation
+if max(alg_data.h.soft) > 0
+   % soft constraints 
+   fprintf(fid,['clip_soft(tmp_var_p,l,u,(' opts.precision ' *) soft,' int2str(n_y) ');\n\n']);
+else
+    % hard constraints
+    fprintf(fid,['clip(tmp_var_p,l,u,' int2str(n_y) ');\n\n']);
+end
+fprintf(fid,['mat_vec_mult_diag(&Einv,tmp_var_p,y);\n\n']);
+
+
+%fprintf(fid,['clip(y,l,u,' int2str(n_y) ');\n\n']);
+
+
+% tmp_var_p contains Cx+lambda
+% lambda variable update lambda = lambda+Cx-Ey
+%fprintf(fid,['mat_vec_mult_diag(&E,y,tmp_var_p2);\n\n']);
+if isequal(opts.alg,'FGMdual')
+    fprintf(fid,['copy_vec_part(lambda,lambda_old,' int2str(n_y) ');\n\n']);
+end
+
+fprintf(fid,['vec_sub(arg_prox_h,tmp_var_p,lambda,' int2str(n_y) ');\n\n']);
+
+% acceleration term in FGM
+if isequal(opts.alg,'FGMdual')
+    fprintf(fid,['vec_sub(lambda,lambda_old,tmp_var_p,' int2str(n_y) ');\n\n']);
+    if alg_data.str_conv > 0
+        fprintf(fid,['scalar_mult(' num2str(alg_data.str_conv,15) ',tmp_var_p,' int2str(n_y) ');\n\n']);
+    else
+        if opts.no_math_lib == 0
+            fprintf(fid,['theta_old = theta;\n\n']);
+            fprintf(fid,['theta = (1+sqrt(1+4*pow(theta_old,2)))/2;\n\n']);
+            fprintf(fid,['scalar_mult((theta_old-1)/theta,tmp_var_p,' int2str(n_y) ');\n\n']);
+        else
+            fprintf(fid,['scalar_mult((jj-1)/(jj+2),tmp_var_p,' int2str(n_y) ');\n\n']);
+        end
+    end
+    if opts.restart == 1
+       fprintf(fid,['copy_vec_part(v,v_old,' int2str(n_y) ');\n\n']); 
+    end
+    fprintf(fid,['vec_add(tmp_var_p,lambda,v,' int2str(n_y) ');\n\n']);
+end
+
+
+
+% check stopping condition
+if isequal(opts.alg,'FGMdual')
+    fprintf(fid,['if (mod(jj,' int2str(opts.check_opt_interval) ') == 0) {\n cond = check_stop_cond_FGM(&Einv,lambda,lambda_old,tmp_var_p,tmp_var_p2,' int2str(n_y) ',' num2str(opts.rel_tol) ');\n }\n\n']);
+elseif isequal(opts.alg,'ADMM')
+    fprintf(fid,['if (mod(jj,' int2str(opts.check_opt_interval) ') == 0) {\n cond = check_stop_cond_ADMM(&CT,&Einv,Cx,y,y_old,lambda,tmp_var_p,tmp_var_p2,tmp_var_n,' int2str(n_x) ',' int2str(n_y) ',' num2str(opts.rel_tol) ');\n }\n\n']);
+end
+
+% add adaptive restart
+if isequal(opts.alg,'FGMdual') && opts.restart == 1
+   fprintf(fid,['restart(lambda,lambda_old,v,v_old,tmp_var_p,tmp_var_p2,' int2str(n_y) ');\n\n']);
+end
+
+
+% end for loop
+fprintf(fid,['}\n\n']);
+
+% reconstruction of original variables
+if isequal(opts.reform,'eq') ||  isequal(opts.reform,'ineq')
+    %if isequal(alg_data.F,eye(n))
+        fprintf(fid,['mat_vec_mult_' structure(alg_data.R) '(&R,x,tmp_var_n_orig);\n\n']);
+        fprintf(fid,['vec_add(tmp_var_n_orig,r,x_out,' int2str(n_orig_x) ');\n\n']);
+        %fprintf(fid,['x_out = R*x+r;\n\n']);
+    %else
+        %fprintf(fid,['x_out = F*(R*x+r);\n\n']);
+    %end
+elseif isequal(opts.reform,'original')
+    %if isequal(alg_data.F,eye(n))
+        fprintf(fid,['copy_vec_part(x,x_out,' int2str(n_orig_x) ');\n\n']);
+        %fprintf(fid,['x_out = x;\n\n']);
+    %else
+    %    fprintf(fid,['x_out = F*x;\n\n']);
+    %end
+end
+
+fprintf(fid,['*iter = jj;\n\n']);
+
+fprintf(fid,['}']);
+
+
+% close file
+fclose(fid);
+
+fprintf('done!\n');
