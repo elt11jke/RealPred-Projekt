@@ -1,0 +1,23 @@
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java Opcom.java Regul.java MPCController.java PlotData.java ReferenceGenerator.java
+
+javah MPCController
+
+gcc -Wl,--add-stdcall-alias -I"C:\Program Files\Java\jdk1.8.0_25\include" -I"C:\Program Files\Java\jdk1.8.0_25\include\win32" -shared -o myjni.dll testsolver.c solver.c ldl.c util.c matrix_support.c
+
+java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main Opcom Regul MPCController PlotData ReferenceGenerator
+
+
+NEW COMMANDS
+
+javac -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main.java Opcom.java Regul.java CVXGENController.java QPGENController.java PlotData.java ReferenceGenerator.java
+
+javah CVXGENController
+
+javah QPGENController
+
+gcc -Wl,--add-stdcall-alias -I"C:\Program Files\Java\jdk1.8.0_25\include" -I"C:\Program Files\Java\jdk1.8.0_25\include\win32" -shared -o myjniCVX.dll testsolver.c solver.c ldl.c util.c matrix_support.c
+
+gcc -Wl,--add-stdcall-alias -I"C:\Program Files\Java\jdk1.8.0_25\include" -I"C:\Program Files\Java\jdk1.8.0_25\include\win32" -shared -o myjniQP.dll QPGEN.c alg_data.c
+
+java -cp ".;csrt.jar;virtualsimulator.jar;regler.jar;" Main Opcom Regul CVXGENController QPGENController PlotData ReferenceGenerator
+ 
