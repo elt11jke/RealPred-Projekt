@@ -27,15 +27,17 @@ float tocq(void) {
   return (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC;
 }
 void printmatrix(char *name, double *A, int m, int n, int sparse) {
-  int i, j;
+  int i, j,z;
   //printf("%s = [...\n", name); TODO remove maybe
   for (i = 0; i < m; i++) {
     for (j = 0; j < n; j++)
       if ((sparse == 1) && (A[i+j*m] == 0))
         //printf("         0"); TODO remove maybe
+        z=0;
       else
         //printf("  % 9.4f", A[i+j*m]); TODO remove maybe
     //printf(",\n"); TODO remove maybe
+       z=1;
   }
   //printf("];\n"); TODO remove maybe
 }

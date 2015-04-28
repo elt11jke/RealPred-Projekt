@@ -296,9 +296,9 @@ void refine(double *target, double *var) {
 #ifndef ZERO_LIBRARY_MODE
     if (settings.verbose_refinement) {
       if (j == 0)
-        //printf("Initial residual before refinement has norm squared %.6g.\n", norm2); TODO remove maybe
+        printf("Initial residual before refinement has norm squared %.6g.\n", norm2); //TODO remove maybe
       else
-        //printf("After refinement we get squared norm %.6g.\n", norm2); TODO remove maybe
+        printf("After refinement we get squared norm %.6g.\n", norm2); //TODO remove maybe
     }
 #endif
     /* Solve to find new_var = KKT \ (target - A*var). */
@@ -319,9 +319,9 @@ void refine(double *target, double *var) {
       norm2 += residual[i]*residual[i];
     }
     if (j == 0)
-      //printf("Initial residual before refinement has norm squared %.6g.\n", norm2); TODO remove maybe
+      printf("Initial residual before refinement has norm squared %.6g.\n", norm2); //TODO remove maybe
     else
-      //printf("After refinement we get squared norm %.6g.\n", norm2); TODO remove maybe
+      printf("After refinement we get squared norm %.6g.\n", norm2); //TODO remove maybe
   }
 #endif
 }
@@ -427,7 +427,7 @@ void fillrhs_start(void) {
     r4[i] = work.b[i];
 }
 long solve(void) {
-  int i;
+  int i,j;
   int iter;
   double *dx, *ds, *dy, *dz;
   double minval;
@@ -437,7 +437,8 @@ long solve(void) {
   pre_ops();
 #ifndef ZERO_LIBRARY_MODE
   if (settings.verbose)
-    //printf("iter     objv        gap       |Ax-b|    |Gx+s-h|    step\n"); TODO remove maybe
+    //printf("iter     objv        gap       |Ax-b|    |Gx+s-h|    step\n"); //TODO remove maybe
+	j=0;
 #endif
   fillq();
   fillh();
