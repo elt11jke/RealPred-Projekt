@@ -1,4 +1,4 @@
-/* Produced by CVXGEN, 2015-04-14 11:14:37 -0400.  */
+/* Produced by CVXGEN, 2015-04-28 05:06:57 -0400.  */
 /* CVXGEN is Copyright (C) 2006-2012 Jacob Mattingley, jem@cvxgen.com. */
 /* The code in this file is Copyright (C) 2006-2012 Jacob Mattingley. */
 /* CVXGEN, or solvers produced by CVXGEN, cannot be used for commercial */
@@ -186,35 +186,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     }
   }
   this_var_errors = 0;
-  xm = mxGetField(prhs[0], 0, "S");
-  if (xm == NULL) {
-    printf("could not find params.S.\n");
-  } else {
-    if (!((mxGetM(xm) == 1) && (mxGetN(xm) == 1))) {
-      printf("S must be size (1,1), not (%d,%d).\n", mxGetM(xm), mxGetN(xm));
-      this_var_errors++;
-    }
-    if (mxIsComplex(xm)) {
-      printf("parameter S must be real.\n");
-      this_var_errors++;
-    }
-    if (!mxIsClass(xm, "double")) {
-      printf("parameter S must be a full matrix of doubles.\n");
-      this_var_errors++;
-    }
-    if (mxIsSparse(xm)) {
-      printf("parameter S must be a full matrix.\n");
-      this_var_errors++;
-    }
-    if (this_var_errors == 0) {
-      dest = params.S;
-      src = mxGetPr(xm);
-      for (i = 0; i < 1; i++)
-        *dest++ = *src++;
-      valid_vars++;
-    }
-  }
-  this_var_errors = 0;
   xm = mxGetField(prhs[0], 0, "r");
   if (xm == NULL) {
     printf("could not find params.r.\n");
@@ -272,8 +243,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       valid_vars++;
     }
   }
-  if (valid_vars != 7) {
-    printf("Error: %d parameters are invalid.\n", 7 - valid_vars);
+  if (valid_vars != 6) {
+    printf("Error: %d parameters are invalid.\n", 6 - valid_vars);
     mexErrMsgTxt("invalid parameters found.");
   }
   if (prepare_for_c) {
@@ -290,8 +261,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       printf("  params.A[%d] = %.6g;\n", i, params.A[i]);
     for (i = 0; i < 8; i++)
       printf("  params.B[%d] = %.6g;\n", i, params.B[i]);
-    for (i = 0; i < 1; i++)
-      printf("  params.S[%d] = %.6g;\n", i, params.S[i]);
   }
   /* Perform the actual solve in here. */
   steps = solve();

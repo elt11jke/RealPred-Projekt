@@ -3543,7 +3543,7 @@ void ldl_solve(double *target, double *var) {
   var[1173] = work.v[1173];
 #ifndef ZERO_LIBRARY_MODE
   if (settings.debug) {
-    //printf("Squared norm for solution is %.8g.\n", check_residual(target, var)); TODO remove maybe
+    printf("Squared norm for solution is %.8g.\n", check_residual(target, var));
   }
 #endif
 }
@@ -18115,7 +18115,7 @@ void ldl_factor(void) {
   work.d_inv[1173] = 1/work.d[1173];
 #ifndef ZERO_LIBRARY_MODE
   if (settings.debug) {
-    //printf("Squared Frobenius for factorization is %.8g.\n", check_factorization()); TODO remove maybe
+    printf("Squared Frobenius for factorization is %.8g.\n", check_factorization());
   }
 #endif
 }

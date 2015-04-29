@@ -296,9 +296,9 @@ void refine(double *target, double *var) {
 #ifndef ZERO_LIBRARY_MODE
     if (settings.verbose_refinement) {
       if (j == 0)
-        printf("Initial residual before refinement has norm squared %.6g.\n", norm2); //TODO remove maybe
+        printf("Initial residual before refinement has norm squared %.6g.\n", norm2);
       else
-        printf("After refinement we get squared norm %.6g.\n", norm2); //TODO remove maybe
+        printf("After refinement we get squared norm %.6g.\n", norm2);
     }
 #endif
     /* Solve to find new_var = KKT \ (target - A*var). */
@@ -319,9 +319,9 @@ void refine(double *target, double *var) {
       norm2 += residual[i]*residual[i];
     }
     if (j == 0)
-      printf("Initial residual before refinement has norm squared %.6g.\n", norm2); //TODO remove maybe
+      printf("Initial residual before refinement has norm squared %.6g.\n", norm2);
     else
-      printf("After refinement we get squared norm %.6g.\n", norm2); //TODO remove maybe
+      printf("After refinement we get squared norm %.6g.\n", norm2);
   }
 #endif
 }
@@ -427,7 +427,7 @@ void fillrhs_start(void) {
     r4[i] = work.b[i];
 }
 long solve(void) {
-  int i,j;
+  int i;
   int iter;
   double *dx, *ds, *dy, *dz;
   double minval;
@@ -437,8 +437,7 @@ long solve(void) {
   pre_ops();
 #ifndef ZERO_LIBRARY_MODE
   if (settings.verbose)
-    //printf("iter     objv        gap       |Ax-b|    |Gx+s-h|    step\n"); //TODO remove maybe
-	j=0;
+    printf("iter     objv        gap       |Ax-b|    |Gx+s-h|    step\n");
 #endif
   fillq();
   fillh();
@@ -499,9 +498,9 @@ long solve(void) {
 #ifndef ZERO_LIBRARY_MODE
     if (settings.verbose) {
       work.optval = eval_objv();
-      /*printf("%3d   %10.3e  %9.2e  %9.2e  %9.2e  % 6.4f\n", 
+      printf("%3d   %10.3e  %9.2e  %9.2e  %9.2e  % 6.4f\n",
           iter+1, work.optval, work.gap, sqrt(work.eq_resid_squared),
-          sqrt(work.ineq_resid_squared), alpha);TODO remove maybe*/
+          sqrt(work.ineq_resid_squared), alpha);
     }
 #endif
     /* Test termination conditions. Requires optimality, and satisfied */

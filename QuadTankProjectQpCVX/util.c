@@ -18,7 +18,7 @@ void tic(void) {
 float toc(void) {
   clock_t tic_timestop;
   tic_timestop = clock();
-  //printf("time: %8.2f.\n", (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC); TODO remove maybe
+  printf("time: %8.2f.\n", (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC);
   return (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC;
 }
 float tocq(void) {
@@ -27,19 +27,17 @@ float tocq(void) {
   return (float)(tic_timestop - tic_timestart) / CLOCKS_PER_SEC;
 }
 void printmatrix(char *name, double *A, int m, int n, int sparse) {
-  int i, j,z;
-  //printf("%s = [...\n", name); TODO remove maybe
+  int i, j;
+  printf("%s = [...\n", name);
   for (i = 0; i < m; i++) {
     for (j = 0; j < n; j++)
       if ((sparse == 1) && (A[i+j*m] == 0))
-        //printf("         0"); TODO remove maybe
-        z=0;
+        printf("         0");
       else
-        //printf("  % 9.4f", A[i+j*m]); TODO remove maybe
-    //printf(",\n"); TODO remove maybe
-       z=1;
+        printf("  % 9.4f", A[i+j*m]);
+    printf(",\n");
   }
-  //printf("];\n"); TODO remove maybe
+  printf("];\n");
 }
 double unif(double lower, double upper) {
   return lower + ((upper - lower)*rand())/RAND_MAX;

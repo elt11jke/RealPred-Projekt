@@ -37,67 +37,99 @@
 %     x_29 == A*x_28 + B*u_28
 %     x_30 == A*x_29 + B*u_29
 %     x_31 == A*x_30 + B*u_30
-%     abs(u_0) <= 10
-%     abs(u_1) <= 10
-%     abs(u_2) <= 10
-%     abs(u_3) <= 10
-%     abs(u_4) <= 10
-%     abs(u_5) <= 10
-%     abs(u_6) <= 10
-%     abs(u_7) <= 10
-%     abs(u_8) <= 10
-%     abs(u_9) <= 10
-%     abs(u_10) <= 10
-%     abs(u_11) <= 10
-%     abs(u_12) <= 10
-%     abs(u_13) <= 10
-%     abs(u_14) <= 10
-%     abs(u_15) <= 10
-%     abs(u_16) <= 10
-%     abs(u_17) <= 10
-%     abs(u_18) <= 10
-%     abs(u_19) <= 10
-%     abs(u_20) <= 10
-%     abs(u_21) <= 10
-%     abs(u_22) <= 10
-%     abs(u_23) <= 10
-%     abs(u_24) <= 10
-%     abs(u_25) <= 10
-%     abs(u_26) <= 10
-%     abs(u_27) <= 10
-%     abs(u_28) <= 10
-%     abs(u_29) <= 10
-%     abs(u_30) <= 10
-%     norm(u_1 - u_0, inf) <= S
-%     norm(u_2 - u_1, inf) <= S
-%     norm(u_3 - u_2, inf) <= S
-%     norm(u_4 - u_3, inf) <= S
-%     norm(u_5 - u_4, inf) <= S
-%     norm(u_6 - u_5, inf) <= S
-%     norm(u_7 - u_6, inf) <= S
-%     norm(u_8 - u_7, inf) <= S
-%     norm(u_9 - u_8, inf) <= S
-%     norm(u_10 - u_9, inf) <= S
-%     norm(u_11 - u_10, inf) <= S
-%     norm(u_12 - u_11, inf) <= S
-%     norm(u_13 - u_12, inf) <= S
-%     norm(u_14 - u_13, inf) <= S
-%     norm(u_15 - u_14, inf) <= S
-%     norm(u_16 - u_15, inf) <= S
-%     norm(u_17 - u_16, inf) <= S
-%     norm(u_18 - u_17, inf) <= S
-%     norm(u_19 - u_18, inf) <= S
-%     norm(u_20 - u_19, inf) <= S
-%     norm(u_21 - u_20, inf) <= S
-%     norm(u_22 - u_21, inf) <= S
-%     norm(u_23 - u_22, inf) <= S
-%     norm(u_24 - u_23, inf) <= S
-%     norm(u_25 - u_24, inf) <= S
-%     norm(u_26 - u_25, inf) <= S
-%     norm(u_27 - u_26, inf) <= S
-%     norm(u_28 - u_27, inf) <= S
-%     norm(u_29 - u_28, inf) <= S
-%     norm(u_30 - u_29, inf) <= S
+%     0 <= u_0
+%     0 <= u_1
+%     0 <= u_2
+%     0 <= u_3
+%     0 <= u_4
+%     0 <= u_5
+%     0 <= u_6
+%     0 <= u_7
+%     0 <= u_8
+%     0 <= u_9
+%     0 <= u_10
+%     0 <= u_11
+%     0 <= u_12
+%     0 <= u_13
+%     0 <= u_14
+%     0 <= u_15
+%     0 <= u_16
+%     0 <= u_17
+%     0 <= u_18
+%     0 <= u_19
+%     0 <= u_20
+%     0 <= u_21
+%     0 <= u_22
+%     0 <= u_23
+%     0 <= u_24
+%     0 <= u_25
+%     0 <= u_26
+%     0 <= u_27
+%     0 <= u_28
+%     0 <= u_29
+%     0 <= u_30
+%     u_0 <= 10
+%     u_1 <= 10
+%     u_2 <= 10
+%     u_3 <= 10
+%     u_4 <= 10
+%     u_5 <= 10
+%     u_6 <= 10
+%     u_7 <= 10
+%     u_8 <= 10
+%     u_9 <= 10
+%     u_10 <= 10
+%     u_11 <= 10
+%     u_12 <= 10
+%     u_13 <= 10
+%     u_14 <= 10
+%     u_15 <= 10
+%     u_16 <= 10
+%     u_17 <= 10
+%     u_18 <= 10
+%     u_19 <= 10
+%     u_20 <= 10
+%     u_21 <= 10
+%     u_22 <= 10
+%     u_23 <= 10
+%     u_24 <= 10
+%     u_25 <= 10
+%     u_26 <= 10
+%     u_27 <= 10
+%     u_28 <= 10
+%     u_29 <= 10
+%     u_30 <= 10
+%     0 <= x_1
+%     0 <= x_2
+%     0 <= x_3
+%     0 <= x_4
+%     0 <= x_5
+%     0 <= x_6
+%     0 <= x_7
+%     0 <= x_8
+%     0 <= x_9
+%     0 <= x_10
+%     0 <= x_11
+%     0 <= x_12
+%     0 <= x_13
+%     0 <= x_14
+%     0 <= x_15
+%     0 <= x_16
+%     0 <= x_17
+%     0 <= x_18
+%     0 <= x_19
+%     0 <= x_20
+%     0 <= x_21
+%     0 <= x_22
+%     0 <= x_23
+%     0 <= x_24
+%     0 <= x_25
+%     0 <= x_26
+%     0 <= x_27
+%     0 <= x_28
+%     0 <= x_29
+%     0 <= x_30
+%     0 <= x_31
 %     x_1 <= 19.8
 %     x_2 <= 19.8
 %     x_3 <= 19.8
@@ -199,7 +231,6 @@
 %        B   4 x 2
 %        Q   4 x 4    PSD
 %        R   2 x 2    PSD
-%        S   1 x 1    positive
 %        r   4 x 1
 %      x_0   4 x 1
 %
@@ -212,7 +243,7 @@
 %
 % Specify params.A, ..., params.x_0, then run
 %   [vars, status] = csolve(params, settings)
-% Produced by CVXGEN, 2015-04-14 11:14:38 -0400.
+% Produced by CVXGEN, 2015-04-28 05:06:57 -0400.
 % CVXGEN is Copyright (C) 2006-2012 Jacob Mattingley, jem@cvxgen.com.
 % The code in this file is Copyright (C) 2006-2012 Jacob Mattingley.
 % CVXGEN, or solvers produced by CVXGEN, cannot be used for commercial

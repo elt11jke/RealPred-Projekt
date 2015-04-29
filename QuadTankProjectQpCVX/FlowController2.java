@@ -14,6 +14,7 @@ public class FlowController2 implements Runnable{
 	private double v2, P2, I2, uref2, yold2, y;
 	private final double K = 0.21, h = 0.01, Ti = 0.06, Tr = 0.06, yMin=0.0, yMax=17.0;
 	public double u2, yraw2;
+	private Regul regul;
 
 	public FlowController2(int prio){
 		this.prio = prio;
@@ -58,6 +59,10 @@ public class FlowController2 implements Runnable{
 				}				
 			}
 		}
+	}
+
+	public void setRegul(Regul r) {
+		regul = r;
 	}
 
 	public void changeRef(double uref2){

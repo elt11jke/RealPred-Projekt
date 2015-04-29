@@ -57,7 +57,10 @@ public class Regul extends Thread {
 		 
 		try {
 		        analogInH1= new AnalogIn(31);
-			analogInH2= new AnalogIn(33); 			
+			analogInH2= new AnalogIn(33); 	
+                        analogOutu1= new AnalogOut(31);
+                	analogOutu2= new AnalogOut(30);
+         		
 		} catch (IOChannelException e) { 
 			System.out.print("Error: IOChannelException: ");
 			System.out.println(e.getMessage());
@@ -110,6 +113,14 @@ public class Regul extends Thread {
 	public synchronized void shutDown() {
 		WeShouldRun = false;
 		mutex.take();
+                   try{
+					analogOutu1.set(0.0);
+					analogOutu2.set(0.0);
+					
+				} catch (Exception e){
+					System.out.println("Unable to receive data from port");
+				}
+                
 	}
 	
 	private double limit(double v, double min, double max) {
@@ -162,14 +173,11 @@ public class Regul extends Thread {
 				tank1Ref=referenceGenerator.getRef1();
 				tank2Ref=referenceGenerator.getRef2();
 				
-				y1LP =0.25*(4*y1LP1 - y1LP2 + h1);
-				y1LP2 = y1LP1; y1LP1 = y1LP; 
-					
-				y2LP = (1/9)*(12*y2LP1 - 4*y2LP2 + h2);
-				y2LP2 = y2LP1; y2LP1 = y2LP;
+                                y1LP1 = h1*0.1 + (1-0.1)*y1LP1;	
+                                y2LP1 = h2*0.1 + (1-0.1)*y2LP1;
 
-				dataToSend[0] = y1LP;
-				dataToSend[1] = y2LP;
+				dataToSend[0] = y1LP1;
+				dataToSend[1] = y2LP1;
 				dataToSend[2] = 0;
 				dataToSend[3] = 0;
 				dataToSend[4] = tank1Ref;
@@ -183,12 +191,24 @@ public class Regul extends Thread {
 				//Test
 				System.out.println(solution[0]);
 				System.out.println(solution[1]);
+                                 try {
+       				  analogOutu1.set(solution[0]);
+                	          analogOutu2.set(solution[1]);	
+
+					
+      			        } catch (Exception e) {
+        				System.out.println(e);
+                                }
+      
+
+                                
+                               
 
 				//Actuate
-				fc1.changeRef(solution[0]);
-				fc2.changeRef(solution[1]);
+				/*fc1.changeRef(solution[0]);
+				fc2.changeRef(solution[1]);*/
 				
-		            	sendDataToOpCom(tank1Ref,tank2Ref,y1LP,y2LP,fc1.u1,fc2.u2);
+		            	sendDataToOpCom(tank1Ref,tank2Ref,y1LP1,y2LP1,solution[0],solution[1]);//fc1.u1,fc2.u2);
 				break;
 			}
 			
@@ -205,14 +225,11 @@ public class Regul extends Thread {
 				tank1Ref=referenceGenerator.getRef1();
 				tank2Ref=referenceGenerator.getRef2();
 				
-				y1LP =0.25*(4*y1LP1 - y1LP2 + h1);
-				y1LP2 = y1LP1; y1LP1 = y1LP; 
-					
-				y2LP = (1/9)*(12*y2LP1 - 4*y2LP2 + h2);
-				y2LP2 = y2LP1; y2LP1 = y2LP;
+                                y1LP1 = h1*0.1 + (1-0.1)*y1LP1;	
+                                y2LP1 = h2*0.1 + (1-0.1)*y2LP1;
 
-				dataToSend[0] = y1LP;
-				dataToSend[1] = y2LP;
+				dataToSend[0] = y1LP1;
+				dataToSend[1] = y2LP1;
 				dataToSend[2] = 0;
 				dataToSend[3] = 0;
 				dataToSend[4] = tank1Ref;
@@ -226,12 +243,20 @@ public class Regul extends Thread {
 				//Test
 				System.out.println(solution[0]);
 				System.out.println(solution[1]);
-
+                                
 				//Actuate
-				fc1.changeRef(solution[0]);
-				fc2.changeRef(solution[1]);
+				/*fc1.changeRef(solution[0]);
+				fc2.changeRef(solution[1]);*/
+                                  try {
+       				  analogOutu1.set(solution[0]);
+                	          analogOutu2.set(solution[1]);	
+
+					
+      			        } catch (Exception e) {
+        				System.out.println(e);
+                                }
 				
-		            	sendDataToOpCom(tank1Ref,tank2Ref,y1LP,y2LP,fc1.u1,fc2.u2);
+		            	sendDataToOpCom(tank1Ref,tank2Ref,y1LP1,y2LP1,solution[0],solution[1]);//fc1.u1,fc2.u2);
 				break;
 			}
 			default: {
