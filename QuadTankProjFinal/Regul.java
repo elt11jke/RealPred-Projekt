@@ -6,10 +6,11 @@ import se.lth.control.realtime.IOChannelException;
 import se.lth.control.realtime.Semaphore;
 import Jama.*;
 
+
 public class Regul extends Thread {
 
 	public static final int CVXGEN = 0, QPGEN = 1;
-	private static final long H = 50;
+	private static final long H = 500;
 	
 	private AnalogIn analogInH1, analogInH2, analogInH3, analogInH4;
 	private AnalogOut analogOutu1, analogOutu2;
@@ -18,7 +19,8 @@ public class Regul extends Thread {
 	private long timeSolCVX, starttime;
 	private int priority;
 	private boolean WeShouldRun = true;
-	private double[] dataToSend, solution;
+	private double[] dataToSend, solution,solution1;
+
 
         
 	private double[][] A0 = {{0.9708,0.0,0.2466,0.0,0.1126,0.0072}, {0.0,0.9689,0.0,0.4032,0.0108,0.1061}, {0.0,0.0,0.7495,0.0,0.0,0.0482}, {0.0,0.0,0.0,0.5898,0.0381,0.0}, {0.0,0.0,0.0,0.0,1.0,0.0}, {0.0,0.0,0.0,0.0,0.0,1.0}}; 
@@ -29,7 +31,7 @@ public class Regul extends Thread {
 	private double[][] P0 = {{0.0,1.0,0.0,0.0,0.0,0.0},{0.0,0.0,1.0,0.0,0.0,0.0},{0.0,0.0,1.0,0.0,0.0,0.0},{0.0,0.0,0.0,1.0,0.0,0.0},{0.0,0.0,0.0,0.0,1.0,0.0},{0.0,0.0,0.0,0.0,0.0,1.0}};
 	private double[][] K0 = {{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0},{0.0,0.0}};
 	private double[][] Y_est0 = new double[2][1];
-	private double[][] states0 = {{-10.0},{-10.0},{-10.0},{-10.0},{1.0},{1.0}};
+	private double[][] states0 = {{0.0},{0.0},{0.0},{0.0},{1.0},{1.0}};
 	private double[][] measurements0 = new double[2][1];
 	private double[][] inputU0 = new double[2][1];
 	
@@ -142,10 +144,14 @@ public class Regul extends Thread {
 	public synchronized void shutDown() {
 		WeShouldRun = false;
 		mutex.take();
+		
+                fc1.shutDown();
+                fc2.shutDown();
+                
+                
+ 	        
                    try{
-					//analogOutu1.set(0.0);
-					//analogOutu2.set(0.0);
-                                        fc1.setRef(0.0);
+                    fc1.setRef(0.0);
 					fc2.setRef(0.0);
 					
 				} catch (Exception e){
@@ -174,7 +180,7 @@ public class Regul extends Thread {
 		
 	}
 	
-	public void run() {
+	public void run() { //throws MatlabConnectionException, MatlabInvocationException {
 		long duration;
 		long t = System.currentTimeMillis();
 		starttime = t;
@@ -192,23 +198,26 @@ public class Regul extends Thread {
 		Matrix Y_est  = new Matrix(Y_est0);
 		Matrix inputU = new Matrix(inputU0);
 		Matrix measurements = new Matrix(measurements0);
-		
 
-		dataToSend[0] = -10;
-		dataToSend[1] = -10;
-		dataToSend[2] = -10;
-		dataToSend[3] = -10;   
+		
+             
+		
+    
+		dataToSend[0] = 0;
+		dataToSend[1] = 0;
+		dataToSend[2] = 0;
+		dataToSend[3] = 0;   
 		dataToSend[4] = 1;
 		dataToSend[5] = 1;
                 dataToSend[6] = tank1Ref;
 		dataToSend[7] = tank2Ref;
 		solution = cvx.calculateOutputCVX(dataToSend);
-
+   
 
 		while (WeShouldRun) {
 			time0 =System.currentTimeMillis();
-			switch (QPGEN){
-			//switch (modeMon.getMode()) {
+			//switch (QPGEN){
+			switch (modeMon.getMode()) {
 			case CVXGEN: {
                                 
 				System.out.println("CVXGEN mode");
@@ -234,6 +243,11 @@ public class Regul extends Thread {
                                 y1LP1 = h1*0.1 + (1-0.1)*y1LP1;	
                                 y2LP1 = h2*0.1 + (1-0.1)*y2LP1;
 
+
+                                
+
+
+               
 				
 
 				measurements0[0][0] = y1LP;
@@ -260,6 +274,7 @@ public class Regul extends Thread {
 				dataToSend[3] = 0;               
 				dataToSend[4] = states.get(4,0); 
 				dataToSend[5] = states.get(5,0);
+				*/
 
 
 
@@ -274,39 +289,42 @@ public class Regul extends Thread {
 
 				dataToSend[3] = 0;               
 
-				dataToSend[4] = 0; 
+				//dataToSend[4] = 0.1; 
 
-				dataToSend[5] = 0;
-                      		dataToSend[6] = tank1Ref;
-				dataToSend[7] = tank2Ref;
+				//dataToSend[5] = 0.1;
+                      		dataToSend[4] = tank1Ref;
+				dataToSend[5] = tank2Ref;
 				
 				//Test
 				System.out.println("REF1 : " + tank1Ref);
 				System.out.println("REF2 : " + tank2Ref);
 
-				System.out.println("h1 from LP " + y1LP1);
-				System.out.println("h2 from LP " + y2LP1);
+				System.out.println("h1 from LP " + (2*y1LP1));
+				System.out.println("h2 from LP " + (2*y2LP1));
 
 
                       
 				timeSolCVX = System.currentTimeMillis();
 				solution = cvx.calculateOutputCVX(dataToSend);
+                               
 				timeSolCVX= System.currentTimeMillis()-timeSolCVX;
 				System.out.println(timeSolCVX);
+
+				//Actuate
+				
+                                fc1.setRef((solution[0]+2.9901));
+                                //System.out.println(" REF: " + tank2Ref);
+				fc2.setRef((solution[1]+3.2));
+                               
 				
 				
 				
-				System.out.println("CVXGEN u1 " + solution[1]);
-				System.out.println("CVXGEN u2 " + solution[0]);
+				
+				System.out.println("CVXGEN u1 " + solution[0]);
+				System.out.println("CVXGEN u2 " + solution[1]);
 
   				 
-                                //Actuate
-				
-                                fc1.setRef(solution[1]);
-                                //System.out.println(" REF: " + tank2Ref);
-				fc2.setRef(solution[0]);
                                 
-				
 
                                 /* try {
        				  analogOutu1.set(solution[0]);
@@ -318,12 +336,12 @@ public class Regul extends Thread {
                                 }*/
 
 				// Update States
-                                
+                                /*
 				inputU0[0][0] = solution[0];
 				inputU0[1][0] = solution[1];
 				inputU = new Matrix(inputU0);				 				
 				states = A.times(states).plus(B.times(inputU)).plus(K.times(measurements.minus(Y_est)));
-                                   
+                                   */
 		            	//sendDataToOpCom(fc2.yref2,fc2.I2,fc2.y2,fc2.P2,fc1.getControlSignalU1(),fc2.getControlSignalU2());
 				sendDataToOpCom(tank1Ref,tank2Ref,2*y1LP1,2*y2LP1,fc1.getControlSignalU1(),fc2.getControlSignalU2());
 				break;
@@ -346,7 +364,7 @@ public class Regul extends Thread {
                                  if(h2<0){
  				   h2=0;
                                  }
-				System.out.println("Rawh1 " + 2*h1);
+				System.out.println("Rawh1 " +  2*h1);
 				System.out.println("Rawh2 "  + 2*h2);
 
 				tank1Ref=referenceGenerator.getRef1();
@@ -356,68 +374,71 @@ public class Regul extends Thread {
                                 y2LP1 = h2*0.1 + (1-0.1)*y2LP1;
 				//y1LP1 = h1;
 				//y2LP2 = h2;
-                               
+                               /*
                                 measurements.set(0,0,(y1LP1));
 				measurements.set(1,0,(y2LP1));
 
 				
                                 /*Current Estimated Measured Output*/
- 			        
-                                /*Y_est = C.times(states);
+ 			        /*
+                                Y_est = C.times(states);
 				System.out.println("Y_hat1 :" + 2*Y_est.get(0,0));
-				System.out.println("Y_hat2 :" + 2*Y_est.get(1,0));*/
+				System.out.println("Y_hat2 :" + 2*Y_est.get(1,0));
+				System.out.println("Y_hat5 :" + states.get(4,0));
+                                System.out.println("Y_hat6 :" + states.get(5,0));
 
-
+                          
 				/* Update Kalman Gain*/
-                                /*K = A.times(P).times(C.transpose()).times((C.times(P).times(C.transpose()).plus(V)).inverse());
+                               // K = A.times(P).times(C.transpose()).times((C.times(P).times(C.transpose()).plus(V)).inverse());
 				
 
                                 /*Update Predicted States Covariance*/
 				/*P = A.times(P).times(A.transpose()).minus(A.times(P).times(C.transpose()).times((C.times(P).times(C.transpose()).plus(V)).inverse()).times(C.times(P).times(A.transpose()))).plus(W);
                                  					
 	                        
-				dataToSend[0] = states.get(0,0); 
+				dataToSend[0] = 2*states.get(0,0); 
 
-				dataToSend[1] = states.get(1,0); 
+				dataToSend[1] = 2*states.get(1,0); 
 
-				dataToSend[2] = states.get(2,0);               
+				dataToSend[2] = 0;               
 
-				dataToSend[3] = states.get(3,0);               
+				dataToSend[3] = 0;               
 
 				dataToSend[4] = states.get(4,0); 
 
 				dataToSend[5] = states.get(5,0);*/
+                   		
 
 				dataToSend[0] =2*y1LP1;
 				dataToSend[1] =2*y2LP1;
 				dataToSend[2] = 0;
 				dataToSend[3] = 0;
-                                dataToSend[4] = 0;
-				dataToSend[5] = 0;
+                                dataToSend[4] = 0.1;
+				dataToSend[5] = 0.1;
                                 
-				dataToSend[6] = 0.1;
-				dataToSend[7] = 0.1;
+				dataToSend[6] = tank1Ref;
+				dataToSend[7] = tank2Ref;
 
 				//Test
 				System.out.println("REF1 : " + tank1Ref);
 				System.out.println("REF2 : " + tank2Ref);
 
-				System.out.println("h1 from LP " + y1LP1);
-				System.out.println("h2 from LP " + y2LP1);
+				System.out.println("h1 from LP " + (2*y1LP1));
+				System.out.println("h2 from LP " + (2*y2LP1));
+                                
 
-				
 				timeSolCVX = System.currentTimeMillis();
 				solution = qp.calculateOutputQPGEN(dataToSend);
 				timeSolCVX= System.currentTimeMillis()-timeSolCVX;
 				System.out.println("time :" +timeSolCVX);
 								
 				//Test
-				System.out.println("U1 "+(solution[0]+2.9901));
-				System.out.println("U2 " +(solution[1]+4.5037));
+				System.out.println("U1 "+solution[0]);
+				System.out.println("U2 " +solution[1]);
                                 
 				//Actuate
-				fc1.setRef(solution[0]+2.9901);
-       			        fc2.setRef(solution[1]+4.5037);
+				fc1.setRef((solution[0]+2.9901));
+       			        fc2.setRef((solution[1]+4.35));
                                   /*try {
        				  analogOutu1.set(solution[0]);
                 	          analogOutu2.set(solution[1]);	
@@ -428,19 +449,19 @@ public class Regul extends Thread {
                                 }*/
 
 				// Update States
-                                
-				inputU.set(0,0,fc1.getControlSignalU1()-2.9901);
-				inputU.set(1,0,fc2.getControlSignalU2()-4.5037);
+                                /*
+				inputU.set(0,0,fc1.getControlSignalU1());
+				inputU.set(1,0,fc2.getControlSignalU2());
 
 				System.out.println("Controlled Input1: " + inputU.get(0,0));
 				System.out.println("Controlled Input2: " + inputU.get(1,0));
 
 				states = A.times(states).plus(B.times(inputU)).plus(K.times(measurements.minus(Y_est)));
-                                
+                                */
 
-				System.out.println("updated state1: " + (states.get(1,0)+10));
+				
  
-	            	sendDataToOpCom(tank1Ref,tank2Ref,Y_est.get(0,0),Y_est.get(1,0),fc1.getControlSignalU1              (),fc2.getControlSignalU2());
+	            	sendDataToOpCom(tank1Ref,tank2Ref,2*y1LP1,2*y2LP1,fc1.getControlSignalU1(),fc2.getControlSignalU2());
 				break;
 			}
 			default: {
@@ -472,3 +493,4 @@ public class Regul extends Thread {
    
 	
 }
+

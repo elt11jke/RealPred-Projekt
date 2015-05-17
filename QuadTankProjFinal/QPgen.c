@@ -1,5 +1,8 @@
 #include <math.h>
 #include "QPgen.h"
+#include <stdio.h>
+#include <jni.h>
+#include "QPGENController.h"
 
 /* solves Ly=Px where P is permutation matrix defined by vector p */
  static void perm_fwdsolve(struct SPARSE_MAT *L, const int *p, double *x, double *y) {
@@ -226,7 +229,7 @@ cond_num_d = norm_sq(tmp_var_n,n);
  return min(cond_p,cond_d);
  }
 
-#include "qp_data/alg_data.c"
+#include "alg_data.c"
 
 void qp(double *x_out, int *iter, double *gt, double *bt) {
 
@@ -339,3 +342,55 @@ copy_vec_part(x,x_out,160);
 *iter = jj;
 
 }
+JNIEXPORT jdoubleArray JNICALL Java_QPGENController_controlSignalQPGEN
+  (JNIEnv *env, jobject thisObj, jdoubleArray inJNIArray) {
+
+
+    jdouble *inCArray = (*env)->GetDoubleArrayElements(env, inJNIArray, NULL);
+    if (NULL == inCArray) return NULL;
+    jsize length = (*env)->GetArrayLength(env, inJNIArray); 
+    
+    int iter;
+
+    jdouble sol[160];
+
+
+
+
+    jdouble gt[6];
+
+    jdouble bt[6];
+
+   
+     bt[0] = inCArray[0];
+     bt[1] = inCArray[1];
+     bt[2] = inCArray[2];
+     bt[3] = inCArray[3];
+     bt[4] = inCArray[4];
+     bt[5] = inCArray[5];
+     
+     gt[0]=  inCArray[6];
+     gt[1]=  inCArray[7];
+     gt[2] = 0;
+     gt[3] = 0;
+     gt[4]= 0;
+     gt[5]= 0;
+
+
+    qp(sol,&iter,gt,bt);
+
+    jdouble u1=sol[120];
+    jdouble u2= sol[121];
+
+    jdouble controlArray[] ={u1 ,u2};
+
+    printf("%f\n",u1);
+    printf("%f\n",u2);
+
+    jdoubleArray outJNIArray = (*env)->NewDoubleArray(env, 2);  // allocate
+   if (NULL == outJNIArray) return NULL;
+   (*env)->SetDoubleArrayRegion(env, outJNIArray, 0 , 2, controlArray);  // copy
+   return outJNIArray;
+
+
+  }

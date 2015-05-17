@@ -82,6 +82,9 @@ public class FlowController1 extends Thread{
 	public void setRegul(Regul r) {
 		regul = r;
 	}
+	  public synchronized void shutDown(){
+               actuate(0.0);
+       } 
 
 	public synchronized void setRef(double yref1){
 		this.yref1=yref1/10;

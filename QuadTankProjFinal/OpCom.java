@@ -76,28 +76,28 @@ public class OpCom {
 	plotterPanel = new BoxPanel(BoxPanel.VERTICAL);
 	// Create PlotterPanels.
 	measPanel1 = new PlotterPanel(2, priority);
-	measPanel1.setYAxis(10, -10, 2, 20);
+	measPanel1.setYAxis(20, 0, 2, 20);
 	measPanel1.setXAxis(100, 10, 50);
 	measPanel1.setUpdateFreq(10);
 	
 	meas1Label=new JLabel("Tank 1 ");
 	
 	measPanel2 = new PlotterPanel(2, priority);
-	measPanel2.setYAxis(10, -10, 2, 20);
+	measPanel2.setYAxis(20, 0, 2, 20);
 	measPanel2.setXAxis(100, 10, 50);
 	measPanel2.setUpdateFreq(10);
 	
 	meas2Label=new JLabel("Tank 2 ");
 	
 	ctrlPanelu1 = new PlotterPanel(1, priority);
-	ctrlPanelu1.setYAxis(20, -10, 2, 20);
+	ctrlPanelu1.setYAxis(10, 0, 2, 20);
 	ctrlPanelu1.setXAxis(100, 10, 50);
 	ctrlPanelu1.setUpdateFreq(10);
 	
 	control1Label=new JLabel("control signal 1 ");
 	
 	ctrlPanelu2 = new PlotterPanel(1, priority);
-	ctrlPanelu2.setYAxis(20, -10, 2, 20);
+	ctrlPanelu2.setYAxis(10, 0, 2, 20);
 	ctrlPanelu2.setXAxis(100, 10, 50);
 	ctrlPanelu2.setUpdateFreq(10);
 
